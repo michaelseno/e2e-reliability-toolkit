@@ -1,0 +1,34 @@
+{
+  "runId" : "20260118_142821",
+  "startedAtIso" : "2026-01-18T14:28:21.056168Z",
+  "finishedAtIso" : "2026-01-18T14:28:25.830055Z",
+  "durationMs" : 4774,
+  "meta" : {
+    "baseUrl" : "https://example.com",
+    "browser" : "CHROMIUM",
+    "headless" : true,
+    "slowMoMs" : 0,
+    "timeoutMs" : 30000
+  },
+  "summary" : {
+    "total" : 2,
+    "passed" : 1,
+    "failed" : 1
+  },
+  "tests" : [ {
+    "testId" : "io.reliabilitykit.smoke.SmokeTest#intentionalFailureToGenerateArtifacts",
+    "status" : "FAILED",
+    "durationMs" : 4121,
+    "errorMessage" : "java.lang.AssertionError: \nExpecting actual:\n  \"Example Domain\"\nto contain:\n  \"Not The Title\" ",
+    "artifacts" : {
+      "screenshotPath" : "artifacts/SmokeTest_intentionalFailureToGenerateArtifacts/20260118_222825/screenshot.png",
+      "tracePath" : "artifacts/SmokeTest_intentionalFailureToGenerateArtifacts/20260118_222825/trace.zip"
+    }
+  }, {
+    "testId" : "io.reliabilitykit.smoke.SmokeTest#canOpenExampleDotCom",
+    "status" : "PASSED",
+    "durationMs" : 634,
+    "errorMessage" : null,
+    "artifacts" : null
+  } ]
+}

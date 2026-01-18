@@ -1,6 +1,7 @@
 package io.reliabilitykit.framework;
 
 import com.microsoft.playwright.*;
+import io.reliabilitykit.reporting.*;
 import org.junit.jupiter.api.extension.*;
 
 import java.nio.file.*;
@@ -17,13 +18,17 @@ public class PlaywrightExtension implements BeforeEachCallback, AfterEachCallbac
     @Override
     public void beforeEach(ExtensionContext context) throws Exception {
         ToolkitConfig config = ToolkitConfig.load();
+        store(context).put("config", config);
+        store(context).put("testStartMs", System.currentTimeMillis());
+
+        // Ensure collector exists for this run
+        RunCollector.get(config);
+
         Browser browser = BrowserManager.getBrowser(config);
         BrowserContext ctx = browser.newContext();
 
         ctx.setDefaultTimeout(config.timeoutMs());
         ctx.setDefaultNavigationTimeout(config.timeoutMs());
-
-        store(context).put("config", config);
 
         ctx.tracing().start(new Tracing.StartOptions()
                 .setScreenshots(true)
@@ -43,25 +48,52 @@ public class PlaywrightExtension implements BeforeEachCallback, AfterEachCallbac
 
         boolean failed = context.getExecutionException().isPresent();
 
+        Path dir = null;
+        ArtifactPaths artifacts = null;
+
         if (failed) {
-            Path dir = artifactDir(context);
+            dir = artifactDir(context);
+
+            Path screenshot = dir.resolve("screenshot.png");
+            Path trace = dir.resolve("trace.zip");
 
             page.screenshot(new Page.ScreenshotOptions()
-                    .setPath(dir.resolve("screenshot.png"))
+                    .setPath(screenshot)
                     .setFullPage(true));
 
             ctx.tracing().stop(new Tracing.StopOptions()
-                    .setPath(dir.resolve("trace.zip")));
+                    .setPath(trace));
+
+            artifacts = new ArtifactPaths(screenshot.toString(), trace.toString());
         } else {
             ctx.tracing().stop();
         }
+
+        Long startMs = store(context).remove("testStartMs", Long.class);
+        long durationMs = startMs == null ? 0 : (System.currentTimeMillis() - startMs);
+
+        String testId = context.getRequiredTestClass().getName() + "#" + context.getRequiredTestMethod().getName();
+        String status = failed ? "FAILED" : "PASSED";
+        String errorMessage = failed ? context.getExecutionException().get().toString() : null;
+
+        ToolkitConfig cfg = store(context).get("config", ToolkitConfig.class);
+        RunCollector.get(cfg).add(new TestResult(testId, status, durationMs, errorMessage, artifacts));
 
         if (ctx != null) ctx.close();
     }
 
     @Override
     public void afterAll(ExtensionContext context) {
-        BrowserManager.shutdown();
+        try {
+            ToolkitConfig cfg = ToolkitConfig.load();
+            RunCollector collector = RunCollector.get(cfg);
+            RunResult result = collector.buildFinal();
+            ResultsWriter.write(result);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to write results.json", e);
+        } finally {
+            BrowserManager.shutdown();
+        }
     }
 
     // Inject Page into tests
