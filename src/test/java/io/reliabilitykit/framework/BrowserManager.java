@@ -8,12 +8,19 @@ public final class BrowserManager {
 
     private BrowserManager() {}
 
-    public static synchronized Browser getBrowser() {
+    public static synchronized Browser getBrowser(ToolkitConfig config) {
         if (browser == null) {
             playwright = Playwright.create();
-            browser = playwright.chromium().launch(
-                    new BrowserType.LaunchOptions().setHeadless(true)
-            );
+
+            BrowserType browserType = switch (config.browser()) {
+                case CHROMIUM -> playwright.chromium();
+                case FIREFOX -> playwright.firefox();
+                case WEBKIT -> playwright.webkit();
+            };
+
+            browser = browserType.launch(new BrowserType.LaunchOptions()
+                    .setHeadless(config.headless())
+                    .setSlowMo(config.slowMoMs()));
         }
         return browser;
     }
