@@ -29,3 +29,10 @@ replay_pid*
 *.iml
 .DS_Store
 .pw-browsers/
+
+# Reliability Toolkit outputs
+results/
+artifacts/
+
+# Playwright caches (optional, but recommended)
+**/playwright/.cache/

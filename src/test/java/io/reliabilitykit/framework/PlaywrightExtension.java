@@ -74,11 +74,22 @@ public class PlaywrightExtension implements BeforeEachCallback, AfterEachCallbac
 
         String testId = context.getRequiredTestClass().getName() + "#" + context.getRequiredTestMethod().getName();
         String status = failed ? "FAILED" : "PASSED";
-        String errorMessage = failed ? context.getExecutionException().get().toString() : null;
+        Throwable error = failed ? context.getExecutionException().get() : null;
+        String errorMessage = error != null ? error.toString() : null;
 
+        String failureType = null;
+        String failureHint = null;
+
+        if (error != null) {
+            io.reliabilitykit.classification.FailureInfo info =
+                    io.reliabilitykit.classification.FailureClassifier.classify(error);
+            failureType = info.type().name();
+            failureHint = info.hint();
+        }
         ToolkitConfig cfg = store(context).get("config", ToolkitConfig.class);
-        RunCollector.get(cfg).add(new TestResult(testId, status, durationMs, errorMessage, artifacts));
-
+        RunCollector.get(cfg).add(
+                new TestResult(testId, status, durationMs, errorMessage, failureType, failureHint, artifacts)
+        );
         if (ctx != null) ctx.close();
     }
 

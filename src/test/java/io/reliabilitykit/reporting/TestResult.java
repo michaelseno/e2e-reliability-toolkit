@@ -1,9 +1,11 @@
 package io.reliabilitykit.reporting;
 
 public record TestResult(
-        String testId,          // Class#method
-        String status,          // PASSED / FAILED
+        String testId,
+        String status,
         long durationMs,
-        String errorMessage,    // nullable
-        ArtifactPaths artifacts // nullable
+        String errorMessage,
+        String failureType,
+        String failureHint,
+        ArtifactPaths artifacts
 ) {}
