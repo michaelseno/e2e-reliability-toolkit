@@ -1,21 +1,24 @@
 package io.reliabilitykit.smoke;
 
-import com.microsoft.playwright.*;
+import com.microsoft.playwright.Page;
+import io.reliabilitykit.framework.PlaywrightExtension;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(PlaywrightExtension.class)
 public class SmokeTest {
+
     @Test
-    void canOpenExampleDotCom() {
-        try (Playwright playwright = Playwright.create()) {
-            Browser browser = playwright.chromium().launch(
-                    new BrowserType.LaunchOptions().setHeadless(true)
-            );
-            Page page = browser.newPage();
-            page.navigate("https://example.com");
-            assertThat(page.title()).contains("Example Domain");
-            browser.close();
-        }
+    void canOpenExampleDotCom(Page page) {
+        page.navigate("https://example.com");
+        assertThat(page.title()).contains("Example Domain");
+    }
+
+    @Test
+    void intentionalFailureToGenerateArtifacts(Page page) {
+        page.navigate("https://example.com");
+        assertThat(page.title()).contains("Not The Title");
     }
 }
