@@ -16,8 +16,14 @@ public class PlaywrightExtension implements BeforeEachCallback, AfterEachCallbac
 
     @Override
     public void beforeEach(ExtensionContext context) throws Exception {
-        Browser browser = BrowserManager.getBrowser();
+        ToolkitConfig config = ToolkitConfig.load();
+        Browser browser = BrowserManager.getBrowser(config);
         BrowserContext ctx = browser.newContext();
+
+        ctx.setDefaultTimeout(config.timeoutMs());
+        ctx.setDefaultNavigationTimeout(config.timeoutMs());
+
+        store(context).put("config", config);
 
         ctx.tracing().start(new Tracing.StartOptions()
                 .setScreenshots(true)
