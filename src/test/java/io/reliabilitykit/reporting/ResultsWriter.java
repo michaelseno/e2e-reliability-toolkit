@@ -13,12 +13,15 @@ public final class ResultsWriter {
 
     private ResultsWriter() {}
 
-    public static Path write(RunResult runResult) throws Exception {
+    public static void write(RunResult runResult) throws Exception {
         Path dir = Paths.get("results", runResult.runId());
         Files.createDirectories(dir);
 
         Path out = dir.resolve("results.json");
         MAPPER.writeValue(out.toFile(), runResult);
-        return out;
+
+        HtmlReportWriter.write(runResult, out);
     }
+
+
 }
