@@ -14,7 +14,6 @@
         <junit.version>5.10.2</junit.version>
         <playwright.version>1.45.0</playwright.version>
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>com.microsoft.playwright</groupId>
@@ -50,7 +49,7 @@
                 <version>3.2.5</version>
                 <configuration>
                     <useModulePath>false</useModulePath>
-                    <excludedGroups>demo</excludedGroups>
+                    <excludedGroups>demo,poc</excludedGroups>
                 </configuration>
             </plugin>
 
