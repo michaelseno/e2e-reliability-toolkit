@@ -12,8 +12,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SmokeTest {
 
     @Test
-    void canOpenExampleDotCom(Page page) {
+    void canOpenBaseUrl(Page page) {
         page.navigate(ToolkitConfig.load().baseUrl());
-        assertThat(page.title()).contains("Example Domain");
+        String title = page.title();
+        assertThat(title).isNotBlank();
     }
 }
