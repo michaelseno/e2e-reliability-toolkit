@@ -12,7 +12,8 @@ import picocli.CommandLine.Command;
                 RunCommand.class,
                 ListRunsCommand.class,
                 ReportCommand.class,
-                OpenCommand.class
+                OpenCommand.class,
+                LogsCommand.class
         }
 )
 public class RkCli implements Runnable {

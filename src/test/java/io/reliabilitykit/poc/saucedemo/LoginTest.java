@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("poc")
+@Tag("saucedemo")
 @ExtendWith(PlaywrightExtension.class)
 public class LoginTest {
 
