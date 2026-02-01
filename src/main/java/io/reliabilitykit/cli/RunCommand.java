@@ -12,16 +12,13 @@ import java.util.concurrent.Callable;
 
 @Command(
         name = "run",
-        description = "Run test suites via Maven (smoke/demo/poc/all)",
+        description = "Run test suites via Maven (smoke/demo/poc)",
         mixinStandardHelpOptions = true
 )
 public class RunCommand implements Callable<Integer> {
 
-    @Parameters(index = "0", description = "Suite to run: smoke | demo | poc | all")
+    @Parameters(index = "0", description = "Suite to run: smoke | demo | poc")
     private String suite;
-
-    @Option(names = "--all", description = "For suite 'poc': run all POC suites")
-    private boolean pocAll;
 
     @Option(names = "--todomvc", description = "For suite 'poc': run TodoMVC POC suite")
     private boolean pocTodo;
@@ -29,31 +26,20 @@ public class RunCommand implements Callable<Integer> {
     @Option(names = "--saucedemo", description = "For suite 'poc': run SauceDemo POC suite")
     private boolean pocSauce;
 
-    @Option(names = "--base-url", description = "Override BASE_URL for this run (sets env var BASE_URL)")
+    @Option(names = "--base-url", description = "Override baseUrl for this run (sets -DbaseUrl)")
     private String baseUrl;
 
     @Override
     public Integer call() {
         try {
-            Map<String, String> env = new HashMap<>();
-            if (baseUrl != null && !baseUrl.isBlank()) {
-                env.put("BASE_URL", baseUrl);
-            }
-
             String s = suite.toLowerCase(Locale.ROOT);
 
             return switch (s) {
-                case "smoke" -> MavenRunner.run(List.of("test"), env);
-                case "demo"  -> MavenRunner.run(List.of("test", "-Pdemo"), env);
-                case "all"   -> MavenRunner.run(List.of("test", "-Pall"), env);
-                case "poc"   -> runPoc(env);
+                case "smoke" -> runSmoke();
+                case "demo"  -> runDemo();
+                case "poc"   -> runPoc();
                 default -> {
-                    System.err.println("Unknown suite: " + suite);
-                    System.err.println("Try one of:");
-                    System.err.println("  rk run smoke");
-                    System.err.println("  rk run demo");
-                    System.err.println("  rk run poc --todomvc | --saucedemo | --all");
-                    System.err.println("  rk run all");
+                    printUsageError("Unknown suite: " + suite);
                     yield 2;
                 }
             };
@@ -65,31 +51,77 @@ public class RunCommand implements Callable<Integer> {
         }
     }
 
-    private int runPoc(Map<String, String> env) throws Exception {
-        // Avoid guessing; force explicit intent
-        if (!pocAll && !pocTodo && !pocSauce) {
-            System.err.println("For suite 'poc', specify one:");
+    private int runSmoke() throws Exception {
+        // Default: just mvn test (pom excludes demo/poc by default)
+        return MavenRunner.run(List.of("test"), envFromBaseUrl());
+    }
+
+    private int runDemo() throws Exception {
+        // Use your existing pom profile for demo
+        return MavenRunner.run(List.of("test", "-Pdemo"), envFromBaseUrl());
+    }
+
+    private int runPoc() throws Exception {
+        // Must be explicit: different apps => different baseUrl
+        if (pocTodo == pocSauce) { // both false OR both true
+            System.err.println("For suite 'poc', specify exactly one target:");
             System.err.println("  rk run poc --todomvc");
             System.err.println("  rk run poc --saucedemo");
-            System.err.println("  rk run poc --all");
             return 2;
         }
 
-        // IMPORTANT:
-        // These profiles must exist in your pom.xml:
-        // - poc-todomvc
-        // - poc-saucedemo
-        // - (optional) poc-all or we run both sequentially
-        if (pocAll) {
-            int c1 = MavenRunner.run(List.of("test", "-Ppoc-todomvc"), env);
-            int c2 = MavenRunner.run(List.of("test", "-Ppoc-saucedemo"), env);
-            return (c1 == 0 && c2 == 0) ? 0 : 1;
-        }
-
         if (pocTodo) {
-            return MavenRunner.run(List.of("test", "-Ppoc-todomvc"), env);
-        }
+            String url = pickBaseUrl(
+                    baseUrl,
+                    "https://demo.playwright.dev/todomvc/"
+            );
 
-        return MavenRunner.run(List.of("test", "-Ppoc-saucedemo"), env);
+            return MavenRunner.run(
+                    List.of(
+                            "test",
+                            "-DjunitTagsInclude=poc&todomvc",
+                            "-DjunitTagsExclude=",
+                            "-DbaseUrl=" + url
+                    ),
+                    new HashMap<>()
+            );
+
+        }
+        // saucedemo
+        String url = pickBaseUrl(
+                baseUrl,
+                "https://www.saucedemo.com"
+        );
+
+        return MavenRunner.run(
+                List.of(
+                        "test",
+                        "-DjunitTagsInclude=poc&saucedemo",
+                        "-DjunitTagsExclude=",
+                        "-DbaseUrl=" + url
+                ),
+                new HashMap<>()
+        );
+    }
+
+    private Map<String, String> envFromBaseUrl() {
+        // We no longer depend on env var BASE_URL for CLI runs.
+        // Keep this method in case you still want env usage later.
+        Map<String, String> env = new HashMap<>();
+        return env;
+    }
+
+    private String pickBaseUrl(String override, String defaultUrl) {
+        if (override != null && !override.isBlank()) return override.trim();
+        return defaultUrl;
+    }
+
+    private void printUsageError(String msg) {
+        System.err.println(msg);
+        System.err.println("Try:");
+        System.err.println("  rk run smoke");
+        System.err.println("  rk run demo");
+        System.err.println("  rk run poc --todomvc");
+        System.err.println("  rk run poc --saucedemo");
     }
 }

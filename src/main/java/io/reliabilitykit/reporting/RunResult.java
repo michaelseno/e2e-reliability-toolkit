@@ -9,5 +9,6 @@ public record RunResult(
         long durationMs,
         RunMeta meta,
         Summary summary,
-        List<TestResult> tests
+        List<TestResult> tests,
+        List<RunLog> logs
 ) {}

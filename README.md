@@ -1,89 +1,126 @@
-
 # ReliabilityKit – E2E Reliability Toolkit
 
-ReliabilityKit is a Java-based, Playwright-powered end‑to‑end reliability testing toolkit focused on **test execution, artifact capture, run analysis, and local reporting**.
+## TL;DR
 
-It is designed to:
-- Standardize how teams run E2E tests
-- Automatically collect diagnostics (screenshots, traces, metadata)
-- Produce structured machine‑readable results
-- Generate human‑readable HTML reports
-- Provide a CLI to explore test history locally
+ReliabilityKit is a Java-based, Playwright-powered execution and reporting layer for end‑to‑end tests.
 
-This project is both:
-- A **real framework foundation**
-- A **portfolio‑grade engineering system**
+You bring the tests. ReliabilityKit runs them, observes them, captures diagnostics, and turns executions into structured reliability data.
 
 ---
 
-# Why ReliabilityKit Exists
+## What ReliabilityKit Is
 
-Modern E2E frameworks focus heavily on writing tests, but very little on:
+ReliabilityKit is an end‑to‑end **reliability execution toolkit** focused on:
 
-- Execution orchestration
-- Failure diagnostics
-- Run consistency
-- Historical visibility
-- Reliability engineering principles
+- Test execution orchestration
+- Failure diagnostics and artifact capture
+- Structured run data (JSON)
+- Human‑readable local reporting (HTML)
+- CLI-driven run exploration
 
-ReliabilityKit’s mission is to sit **above raw test code** and act as the execution and reporting layer.
+It is intentionally **not** a test authoring framework.
 
-In simple terms:
-
-> “You bring your tests. ReliabilityKit runs them, observes them, captures everything, and turns executions into analyzable reliability data.”
-
----
-
-# Current Architecture Philosophy
-
-ReliabilityKit follows these principles:
-
-- **Execution‑first design**
-  The framework owns browser lifecycle, tracing, artifact capture, timing, and reporting.
-
-- **Non‑intrusive test authoring**
-  Tests look like normal JUnit + Playwright tests. No DSLs, no magic frameworks.
-
-- **Structured outputs**
-  Every run produces JSON and HTML. Results are deterministic and machine‑friendly.
-
-- **Runner‑agnostic core**
-  Today Maven is used. Tomorrow Maven will be replaced by a native runner.
-
-- **Local‑first reliability tooling**
-  The toolkit works fully offline. No SaaS dependency.
-
-- **Framework before platform**
-  We are building a toolkit, not a SaaS dashboard.
+This project serves both as:
+- A real, evolving framework foundation
+- A portfolio‑grade systems engineering case study
 
 ---
 
-# Current Feature Set
+## Why ReliabilityKit Exists
+
+Most E2E frameworks focus on *writing* tests.
+
+Very few focus on:
+- How tests are executed
+- What happens when they fail
+- How runs are analyzed
+- How reliability trends are observed over time
+
+ReliabilityKit exists to solve the **execution gap**.
+
+> “Modern test frameworks help you write tests.
+> ReliabilityKit helps you run them reliably.”
+
+---
+
+## Architecture Philosophy
+
+ReliabilityKit is built on the following principles:
+
+### Execution‑First Design
+The framework owns:
+- Browser lifecycle
+- Tracing
+- Artifact capture
+- Timing
+- Result aggregation
+
+Tests do not manage infrastructure concerns.
+
+---
+
+### Non‑Intrusive Test Authoring
+Tests look like normal:
+- JUnit 5 tests
+- Playwright code
+- No DSLs
+- No framework lock‑in
+
+---
+
+### Structured Outputs
+Every run produces:
+- `results.json` (machine‑readable)
+- `report.html` (human‑readable)
+- Deterministic, versionable outputs
+
+---
+
+### Runner‑Agnostic Core
+- Maven is used today
+- Maven will be removed later
+- Execution logic lives in the toolkit, not the build tool
+
+---
+
+### Local‑First Reliability Tooling
+- No SaaS dependency
+- No cloud requirement
+- Fully usable offline
+
+---
+
+### Framework Before Platform
+This is a toolkit foundation — not a hosted product.
+
+---
+
+## Current Feature Set
 
 - JUnit 5 Playwright extension
-- Automatic browser lifecycle
+- Automatic browser lifecycle handling
 - Per‑test timing and status tracking
 - Screenshot and trace capture on failure
-- Failure classification and hints
+- Failure classification with hints
 - Structured `results.json` per run
 - Auto‑generated HTML reports
-- CLI to explore run history
-- Tag‑based test execution (smoke, poc, demo)
+- Local CLI for run exploration
+- Tag‑based execution (smoke, poc, demo)
 
 ---
 
-# Project Structure
+## Project Structure
 
 ```
 src/main/java
-  io.reliabilitykit.framework   -> Core execution layer
-  io.reliabilitykit.reporting   -> Results, HTML, run model
+  io.reliabilitykit.framework   -> Execution & browser lifecycle
+  io.reliabilitykit.reporting   -> Results model & HTML reporting
   io.reliabilitykit.cli         -> rk CLI application
 
 src/test/java
   smoke/                        -> Smoke tests
   poc/                          -> Proof‑of‑concept suites
-  demo/                         -> Demo/failure showcase tests
+  demo/                         -> Demo / failure showcase tests
 
 results/
   YYYYMMDD_HHMMSS/
@@ -94,28 +131,29 @@ results/
 
 ---
 
-# How Users Are Expected To Use This Toolkit
+## How Users Are Expected To Use This Toolkit
 
-A typical user flow:
+Typical workflow:
 
-1. Fork or clone the toolkit
-2. Add their own test suites under `src/test/java`
+1. Clone or fork the repository
+2. Add test suites under `src/test/java`
 3. Tag tests (`@Tag("smoke")`, `@Tag("poc")`, etc.)
-4. Run via CLI or Maven
-5. ReliabilityKit handles:
-    - Browser startup
-    - Failure artifacts
-    - Result aggregation
-    - HTML report generation
-6. Use CLI to explore history
+4. Run via Maven or CLI
+5. ReliabilityKit:
+    - Manages browser lifecycle
+    - Captures artifacts on failure
+    - Aggregates run data
+    - Generates HTML reports
+6. Use CLI to inspect historical runs
 
-Example mental model:
+Mental model:
 
-> “I don’t run Playwright tests. I run ReliabilityKit. It runs my Playwright tests.”
+> “I don’t run Playwright tests.
+> I run ReliabilityKit, and it runs my Playwright tests.”
 
 ---
 
-# Running Tests
+## Running Tests
 
 ### Default (Smoke only)
 
@@ -123,17 +161,7 @@ Example mental model:
 mvn test
 ```
 
-Runs only smoke tests (demo and poc excluded by default).
-
----
-
-### POC suite
-
-```
-mvn test -Ppoc
-```
-
-Runs all tests tagged with `@Tag("poc")`.
+Smoke tests run by default. Demo and POC tests are excluded.
 
 ---
 
@@ -143,45 +171,46 @@ Runs all tests tagged with `@Tag("poc")`.
 mvn test -Pdemo
 ```
 
-Runs all tests tagged with `@Tag("demo")`.
+Runs tests tagged with `@Tag("demo")`.
 
 ---
 
-### Using environment base URL
+### POC suite (CLI‑driven)
 
 ```
-BASE_URL=https://demo.playwright.dev/todomvc/ mvn test -Ppoc
+java -jar target/reliabilitykit-cli.jar run poc --todomvc
+java -jar target/reliabilitykit-cli.jar run poc --saucedemo
 ```
+
+Each POC target maps to its own base URL and execution context.
 
 ---
 
-# Results Output
+## Results Output
 
-Every execution generates a new folder under:
+Each execution generates:
 
 ```
-/results/YYYYMMDD_HHMMSS/
+results/YYYYMMDD_HHMMSS/
 ```
 
-This folder contains:
+Containing:
 
 ```
 results.json   -> structured machine output
-report.html    -> human readable dashboard
+report.html    -> local HTML dashboard
 artifacts/     -> screenshots & traces
 ```
 
 ---
 
-# Build CLI
-
-Build the shaded CLI jar:
+## Building the CLI
 
 ```
 mvn -DskipTests package
 ```
 
-This generates:
+Produces:
 
 ```
 target/reliabilitykit-cli.jar
@@ -189,7 +218,7 @@ target/reliabilitykit-cli.jar
 
 ---
 
-# CLI Usage
+## CLI Usage
 
 ```
 java -jar target/reliabilitykit-cli.jar
@@ -198,6 +227,10 @@ java -jar target/reliabilitykit-cli.jar
 Available commands:
 
 ```
+rk run smoke
+rk run demo
+rk run poc --todomvc
+rk run poc --saucedemo
 rk list-runs
 rk report --latest
 rk open --latest
@@ -205,94 +238,60 @@ rk open --latest
 
 ---
 
-### List previous runs
+## Example End‑to‑End Flow
 
 ```
-rk list-runs
-```
-
-Shows recent runs with totals and duration.
-
----
-
-### Locate report
-
-```
-rk report --latest
-```
-
-Prints absolute path to latest report.
-
----
-
-### Open report in browser
-
-```
-rk open --latest
-```
-
-Launches the HTML report automatically.
-
----
-
-# Example End‑to‑End Flow
-
-```
-mvn test -Ppoc
+java -jar target/reliabilitykit-cli.jar run poc --todomvc
 java -jar target/reliabilitykit-cli.jar open --latest
 ```
 
-Run tests → generate artifacts → open dashboard.
-
 ---
 
-# What This Toolkit Is NOT
+## What This Toolkit Is NOT
 
 - ❌ A SaaS product
 - ❌ A hosted dashboard
 - ❌ A replacement for Playwright
-- ❌ A test authoring framework
+- ❌ A test authoring DSL
 
 ---
 
-# What This Toolkit IS
+## What This Toolkit IS
 
 - ✅ A reliability execution layer
+- ✅ A diagnostics and observability system
 - ✅ A framework foundation
-- ✅ A diagnostics platform
-- ✅ A run‑analysis system
-- ✅ A portfolio‑grade engineering project
+- ✅ A CLI‑driven tooling product
+- ✅ A portfolio‑grade engineering case study
 
 ---
 
-# Roadmap Direction
+## Roadmap Direction
 
-Short term:
-- Maven runner via CLI
-- Bash‑level orchestration
-- Improved CLI commands
-- Better HTML reporting
+### Short Term
+- Maven‑based runner via CLI
+- Improved CLI ergonomics
+- Enhanced HTML reporting
 
-Mid term:
+### Mid Term
 - Native runner (no Maven)
 - Test discovery engine
 - Execution scheduler
 - Plugin architecture
 
-Long term:
+### Long Term
 - Reliability scoring
 - Flakiness detection
-- Self‑healing experiments
 - Distributed execution
 - Enterprise‑grade reliability tooling
 
 ---
 
-# Portfolio Value
+## Portfolio Value
 
 This project demonstrates:
 
-- Test framework architecture
+- Framework architecture
 - Execution engine design
 - Observability thinking
 - CLI product development
@@ -301,7 +300,7 @@ This project demonstrates:
 
 ---
 
-# Status
+## Status
 
 ReliabilityKit is actively evolving.
 
