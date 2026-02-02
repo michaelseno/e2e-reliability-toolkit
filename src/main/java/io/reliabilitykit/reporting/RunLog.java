@@ -1,8 +1,10 @@
 package io.reliabilitykit.reporting;
 
 public record RunLog(
-        String tsIso,     // ISO-8601 in UTC
+        String timestampIso,
         LogLevel level,
-        String scope,     // e.g., "RUN", "TEST", "ARTIFACT"
-        String message
+        String scope,       // RUN / TEST / TRACE / ARTIFACT / BROWSER
+        String message,
+        String testId,      // nullable
+        String artifactDir  // nullable
 ) {}

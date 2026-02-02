@@ -21,11 +21,11 @@ public class PlaywrightExtension implements BeforeEachCallback, AfterEachCallbac
         store(context).put("config", config);
         store(context).put("testStartMs", System.currentTimeMillis());
 
-        String testId = context.getRequiredTestClass().getName() + "#" + context.getRequiredTestMethod().getName();
+        String testId = testId(context);
 
         // Ensure collector exists + log test start with key config
         RunCollector collector = RunCollector.get(config);
-        collector.log(LogLevel.INFO, "TEST",
+        collector.test(LogLevel.INFO, testId,
                 "Test started: " + testId
                         + " browser=" + config.browser().name()
                         + " headless=" + config.headless()
@@ -46,7 +46,7 @@ public class PlaywrightExtension implements BeforeEachCallback, AfterEachCallbac
                 .setSnapshots(true)
                 .setSources(true));
 
-        collector.log(LogLevel.INFO, "TRACE",
+        collector.trace(LogLevel.INFO, testId,
                 "Tracing started: screenshots=true snapshots=true sources=true");
 
         Page page = ctx.newPage();
@@ -63,6 +63,8 @@ public class PlaywrightExtension implements BeforeEachCallback, AfterEachCallbac
         BrowserContext ctx = store(context).remove("context", BrowserContext.class);
         Page page = store(context).remove("page", Page.class);
 
+        String testId = testId(context);
+
         boolean failed = context.getExecutionException().isPresent();
         Throwable error = failed ? context.getExecutionException().orElse(null) : null;
 
@@ -77,17 +79,27 @@ public class PlaywrightExtension implements BeforeEachCallback, AfterEachCallbac
                     Path screenshot = dir.resolve("screenshot.png");
                     Path trace = dir.resolve("trace.zip");
 
-                    page.screenshot(new Page.ScreenshotOptions()
-                            .setPath(screenshot)
-                            .setFullPage(true));
+                    // Screenshot first (best-effort)
+                    try {
+                        page.screenshot(new Page.ScreenshotOptions()
+                                .setPath(screenshot)
+                                .setFullPage(true));
+                    } catch (Exception e) {
+                        collector.artifact(testId, dir.toString(),
+                                "Screenshot capture failed: " + oneLine(e.toString(), 220));
+                    }
 
                     // Stop tracing and write trace.zip
-                    ctx.tracing().stop(new Tracing.StopOptions().setPath(trace));
+                    try {
+                        ctx.tracing().stop(new Tracing.StopOptions().setPath(trace));
+                        collector.trace(LogLevel.WARN, testId, "Tracing stopped: savedTrace=" + trace);
+                    } catch (Exception e) {
+                        collector.trace(LogLevel.WARN, testId, "Tracing stop failed: " + oneLine(e.toString(), 220));
+                    }
 
                     artifacts = new ArtifactPaths(screenshot.toString(), trace.toString());
 
-                    collector.log(LogLevel.WARN, "TRACE", "Tracing stopped: savedTrace=" + trace);
-                    collector.log(LogLevel.WARN, "ARTIFACT",
+                    collector.artifact(testId, dir.toString(),
                             "Artifacts saved: dir=" + dir
                                     + " screenshot=" + artifacts.screenshotPath()
                                     + " trace=" + artifacts.tracePath());
@@ -95,9 +107,9 @@ public class PlaywrightExtension implements BeforeEachCallback, AfterEachCallbac
                     // Stop tracing (no file)
                     try {
                         ctx.tracing().stop();
-                        collector.log(LogLevel.INFO, "TRACE", "Tracing stopped: (no trace saved)");
+                        collector.trace(LogLevel.INFO, testId, "Tracing stopped (no artifacts)");
                     } catch (Exception e) {
-                        collector.log(LogLevel.WARN, "TRACE", "Tracing stop failed: " + oneLine(e.toString(), 160));
+                        collector.trace(LogLevel.WARN, testId, "Tracing stop failed: " + oneLine(e.toString(), 220));
                     }
                 }
             }
@@ -105,9 +117,9 @@ public class PlaywrightExtension implements BeforeEachCallback, AfterEachCallbac
             if (ctx != null) {
                 try {
                     ctx.close();
-                    collector.log(LogLevel.INFO, "BROWSER", "Context closed");
+                    collector.browser(LogLevel.INFO, "Context closed");
                 } catch (Exception e) {
-                    collector.log(LogLevel.WARN, "BROWSER", "Context close failed: " + oneLine(e.toString(), 160));
+                    collector.browser(LogLevel.WARN, "Context close failed: " + oneLine(e.toString(), 220));
                 }
             }
         }
@@ -115,7 +127,6 @@ public class PlaywrightExtension implements BeforeEachCallback, AfterEachCallbac
         Long startMs = store(context).remove("testStartMs", Long.class);
         long durationMs = startMs == null ? 0 : (System.currentTimeMillis() - startMs);
 
-        String testId = context.getRequiredTestClass().getName() + "#" + context.getRequiredTestMethod().getName();
         String status = failed ? "FAILED" : "PASSED";
         String errorMessage = error != null ? error.toString() : null;
 
@@ -141,10 +152,10 @@ public class PlaywrightExtension implements BeforeEachCallback, AfterEachCallbac
         if (failed) {
             if (failureType != null) msg.append(" failureType=").append(failureType);
             if (failureHint != null) msg.append(" hint=\"").append(failureHint).append("\"");
-            if (errorMessage != null) msg.append(" error=\"").append(oneLine(errorMessage, 200)).append("\"");
+            if (errorMessage != null) msg.append(" error=\"").append(oneLine(errorMessage, 320)).append("\"");
         }
 
-        collector.log(failed ? LogLevel.WARN : LogLevel.INFO, "TEST", msg.toString());
+        collector.test(failed ? LogLevel.WARN : LogLevel.INFO, testId, msg.toString());
     }
 
     @Override
@@ -173,6 +184,10 @@ public class PlaywrightExtension implements BeforeEachCallback, AfterEachCallbac
 
     private ExtensionContext.Store store(ExtensionContext context) {
         return context.getStore(NAMESPACE);
+    }
+
+    private static String testId(ExtensionContext context) {
+        return context.getRequiredTestClass().getName() + "#" + context.getRequiredTestMethod().getName();
     }
 
     private Path artifactDir(ExtensionContext context) throws Exception {
