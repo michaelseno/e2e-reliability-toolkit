@@ -11,6 +11,15 @@ import java.util.Optional;
 @Command(name = "logs", description = "Print run logs from results.json")
 public class LogsCommand implements Runnable {
 
+    @Option(names="--level", description="Minimum level: DEBUG|INFO|WARN|ERROR (default: INFO)")
+    String level = "INFO";
+
+    @Option(names="--scope", description="Filter by scope: RUN|TEST|TRACE|ARTIFACT|BROWSER")
+    String scope;
+
+    @Option(names={"--tail"}, description="Show only the last N log lines")
+    Integer tail;
+
     @Option(names = {"--latest"}, description = "Use the latest run")
     boolean latest;
 
@@ -51,7 +60,7 @@ public class LogsCommand implements Runnable {
 
             for (RunLog log : run.logs()) {
                 System.out.printf("%s [%s] (%s) %s%n",
-                        log.tsIso(),
+                        log.timestampIso(),
                         log.level(),
                         log.scope(),
                         log.message()
