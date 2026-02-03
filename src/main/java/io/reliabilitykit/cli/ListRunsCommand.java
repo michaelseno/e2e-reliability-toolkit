@@ -1,5 +1,6 @@
 package io.reliabilitykit.cli;
 
+import io.reliabilitykit.reporting.RunMeta;
 import io.reliabilitykit.reporting.RunResult;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -34,13 +35,22 @@ public class ListRunsCommand implements Runnable {
                 }
 
                 RunResult run = RunIndex.readRun(jsonOpt.get());
+                RunMeta meta = run.meta();
+
+                String baseUrl = (meta != null && meta.baseUrl() != null) ? meta.baseUrl() : "";
+                String browser = (meta != null && meta.browser() != null) ? meta.browser() : "";
+                String headless = (meta != null) ? String.valueOf(meta.headless()) : "";
+
                 System.out.printf(
-                        "%s  total=%d passed=%d failed=%d durationMs=%d%n",
+                        "%s  total=%d passed=%d failed=%d durationMs=%d  browser=%s headless=%s  baseUrl=%s%n",
                         runId,
                         run.summary().total(),
                         run.summary().passed(),
                         run.summary().failed(),
-                        run.durationMs()
+                        run.durationMs(),
+                        browser,
+                        headless,
+                        baseUrl
                 );
             }
         } catch (Exception e) {

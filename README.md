@@ -197,8 +197,8 @@ results/YYYYMMDD_HHMMSS/
 Containing:
 
 ```
-results.json   -> structured machine output
-report.html    -> local HTML dashboard
+results.json   -> structured machine output (including logs)
+report.html    -> human readable dashboard
 artifacts/     -> screenshots & traces
 ```
 
@@ -232,9 +232,35 @@ rk run demo
 rk run poc --todomvc
 rk run poc --saucedemo
 rk list-runs
-rk report --latest
-rk open --latest
+rk report –latest
+rk report –run 
+rk open –latest
+rk open –run 
+rk logs –latest
+rk logs –run 
 ```
+
+---
+
+### View execution logs
+
+`rk logs –latest`
+
+Prints structured execution logs captured during the run.
+
+```
+Optional filters:
+
+rk logs –latest –level WARN
+rk logs –run  –scope TEST
+rk logs –latest –tail 20
+```
+Logs include:
+- Run lifecycle events
+- Test start / finish
+- Tracing and artifact capture
+- Browser lifecycle events
+- Failure classification details
 
 ---
 
