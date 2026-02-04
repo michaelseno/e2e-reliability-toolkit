@@ -22,6 +22,4 @@ public final class ResultsWriter {
 
         HtmlReportWriter.write(runResult, out);
     }
-
-
 }

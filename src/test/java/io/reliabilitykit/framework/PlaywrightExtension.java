@@ -74,7 +74,7 @@ public class PlaywrightExtension implements BeforeEachCallback, AfterEachCallbac
         try {
             if (ctx != null) {
                 if (failed && page != null) {
-                    dir = artifactDir(context);
+                    dir = artifactDir(context, collector);
 
                     Path screenshot = dir.resolve("screenshot.png");
                     Path trace = dir.resolve("trace.zip");
@@ -97,7 +97,12 @@ public class PlaywrightExtension implements BeforeEachCallback, AfterEachCallbac
                         collector.trace(LogLevel.WARN, testId, "Tracing stop failed: " + oneLine(e.toString(), 220));
                     }
 
-                    artifacts = new ArtifactPaths(screenshot.toString(), trace.toString());
+                    Path runRoot = Paths.get("results", collector.runId());
+
+                    String relScreenshot = Files.exists(screenshot) ? runRoot.relativize(screenshot).toString() : null;
+                    String relTrace      = Files.exists(trace)      ? runRoot.relativize(trace).toString()      : null;
+
+                    artifacts = new ArtifactPaths(relScreenshot, relTrace);
 
                     collector.artifact(testId, dir.toString(),
                             "Artifacts saved: dir=" + dir
@@ -190,12 +195,15 @@ public class PlaywrightExtension implements BeforeEachCallback, AfterEachCallbac
         return context.getRequiredTestClass().getName() + "#" + context.getRequiredTestMethod().getName();
     }
 
-    private Path artifactDir(ExtensionContext context) throws Exception {
+    private Path artifactDir(ExtensionContext context, RunCollector collector) throws Exception {
         String testName = context.getRequiredTestClass().getSimpleName() + "_" +
                 context.getRequiredTestMethod().getName();
 
         String time = LocalDateTime.now().format(TS);
-        Path dir = Paths.get("artifacts", testName, time);
+
+        // Put artifacts INSIDE the run directory so report.html can link to them
+        Path dir = Paths.get("results", collector.runId(), "artifacts", testName, time);
+
         Files.createDirectories(dir);
         return dir;
     }
