@@ -52,4 +52,14 @@ public final class RunIndex {
     public static RunResult readRun(Path resultsJson) throws Exception {
         return MAPPER.readValue(resultsJson.toFile(), RunResult.class);
     }
+
+    public static List<Path> listResultsJsonFiles() throws Exception {
+        List<Path> runDirs = listRunDirs();
+        List<Path> files = new ArrayList<>();
+        for (Path dir : runDirs) {
+            Path p = dir.resolve("results.json");
+            if (Files.exists(p)) files.add(p);
+        }
+        return files;
+    }
 }
